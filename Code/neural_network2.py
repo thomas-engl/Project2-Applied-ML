@@ -5,7 +5,6 @@ Created on Thu Oct 23 14:31:10 2025
 @author: Philipp Brückelt
 """
 
-
 # autograd and sklearn
 import autograd.numpy as np
 from autograd import grad, elementwise_grad
@@ -21,7 +20,6 @@ from matplotlib.ticker import LinearLocator, LogLocator
 from matplotlib.ticker import MaxNLocator
 from matplotlib.ticker import StrMethodFormatter
 from mpl_toolkits.mplot3d import Axes3D                 # for 3d plotting
-
 
 # for interpolating predictions for visualizing
 from scipy import interpolate
@@ -199,14 +197,6 @@ class NeuralNetwork:
             layer_grads[i] = (dC_dW, dC_db)
         return layer_grads
 
-    """
-    def update_weights(self, layer_grads, velocity):
-        # Work on a copy of the layers so the caller's objects are not mutated 
-        # unexpectedly
-        new_layers = [(W.copy(), b.copy()) for (W, b) in self.layers]
-        self.layers = gd_momentum_step(new_layers, layer_grads, velocity)
-    """
-
     """ These last two methods are not needed in the project, but they can be 
     nice to have! The first one has a layers parameter so that you can use 
     autograd on it """
@@ -260,7 +250,7 @@ def train_network(network, inputs, targets, optimizer, epochs=100,
         if epoch % 10 == 0:
             predicts = ffnn.predict(inputs)
             # break if cost function is small enough
-            if ffnn.cost_fnc(predicts, targets) < tol:
+            if network.cost_fnc(predicts, targets) < tol:
                 break
             
             
@@ -353,9 +343,6 @@ def RMSProp(layers, gradients, params, learning_rate, epsilon=1e-7, rho=0.9):
     return new_layers, new_params
         
         
-        
-        
-   
 """
 Scaling data
 """
@@ -387,9 +374,6 @@ def get_scaled_data(inputs, targets):
     # y_train -= y_mean
     # y_test -= y_mean
     return x_train, x_test, y_train, y_test
-
-
-
 
 
 """ ===========================================================================
@@ -454,7 +438,6 @@ def plot_approximation_3D(x_data, y_data, domain):
     # interplate the discrete values
     f = interpolate.LinearNDInterpolator(x_data, y_data.reshape(-1,))
     plot_3D(f, domain)
-
 
 
 if __name__ == '__main__':
