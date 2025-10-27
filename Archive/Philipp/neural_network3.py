@@ -4,6 +4,7 @@ Created on Thu Oct 23 14:31:10 2025
 
 @author: Philipp Brückelt
 """
+
 from copy import deepcopy
 # autograd and sklearn
 import autograd.numpy as np
@@ -250,6 +251,9 @@ class Adam(Scheduler):
         self.n_epochs += 1
         self.moment = 0
         self.second = 0
+        
+        
+
 """ ===========================================================================
                             Neural network code
 =========================================================================== """
@@ -381,7 +385,7 @@ class NeuralNetwork:
         grad_func = grad(cost, 1)
         return grad_func(inputs, self.layers, targets)
 
-        
+   
 """
 Scaling data
 """
@@ -403,7 +407,6 @@ def get_inputs_targets(inputs, targets):
     return x, y
 
 def get_scaled_data(inputs, targets):
-    """ scale the data """
     x, y = get_inputs_targets(inputs, targets)
     # scaler = StandardScaler()
     x_train, x_test, y_train, y_test = train_test_split(x, y)
@@ -488,7 +491,9 @@ creates a heat map of the test accuracy, depending on number of hidden layers
 and nodes per hidden layer
 """
 
-def test_accuracy(activation_funcs, layer_output_sizes, cost_fnc=mse):
+def test_accuracy(data, activation_funcs, layer_output_sizes, cost_fnc=mse):
+    # load data
+    x_train, x_test, y_train, y_test = data
     activation_derivatives = get_activation_ders(activation_funcs)
     cost_der = globals()[cost_fnc.__name__ + '_der']
     nn = NeuralNetwork(
@@ -503,8 +508,6 @@ def test_accuracy(activation_funcs, layer_output_sizes, cost_fnc=mse):
 
 def test_different_layers(data, number_hidden_layers, nodes_per_layer,
                            input_size, output_size, cost_fnc=mse):
-    # load data
-    x_train, x_test, y_train, y_test = data
     accuracies = []
     for i in number_hidden_layers:
         accuracy_i = []
@@ -512,7 +515,7 @@ def test_different_layers(data, number_hidden_layers, nodes_per_layer,
         for j in nodes_per_layer:
             layer_output_sizes = [j for _ in range(i)]
             layer_output_sizes.append(output_size)
-            acc = test_accuracy(activation_funcs, layer_output_sizes, cost_fnc)
+            acc = test_accuracy(data, activation_funcs, layer_output_sizes, cost_fnc)
             accuracy_i.append(acc)
         accuracies.append(accuracy_i)
     return accuracies
