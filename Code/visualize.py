@@ -25,7 +25,8 @@ creates a heat map of the test accuracy, depending on number of hidden layers
 and nodes per hidden layer
 """
 
-def test_accuracy(data, activation_funcs, layer_output_sizes, cost_fnc):
+def test_accuracy(data, activation_funcs, layer_output_sizes, 
+                  input_size, output_size, cost_fnc, optimizer_):
     # load data
     x_train, x_test, y_train, y_test = data
     activation_derivatives = get_activation_ders(activation_funcs)
@@ -35,13 +36,13 @@ def test_accuracy(data, activation_funcs, layer_output_sizes, cost_fnc):
         activation_derivatives, cost_fnc, cost_der
         )
     # train the network
-    nn.train_network(x_train, y_train, batches=10, optimizer=Momentum(
-        eta=0.01, momentum=0.9), epochs=500)
+    nn.train_network(x_train, y_train, batches=10, optimizer=optimizer_, 
+                     epochs=500)
     predicts = nn.predict(x_test)
     return cost_fnc(predicts, y_test)
 
 def test_different_layers(data, number_hidden_layers, nodes_per_layer,
-                           input_size, output_size, cost_fnc):
+                           input_size, output_size, cost_fnc, optimizer_):
     accuracies = []
     for i in number_hidden_layers:
         accuracy_i = []
@@ -49,15 +50,16 @@ def test_different_layers(data, number_hidden_layers, nodes_per_layer,
         for j in nodes_per_layer:
             layer_output_sizes = [j for _ in range(i)]
             layer_output_sizes.append(output_size)
-            acc = test_accuracy(data, activation_funcs, layer_output_sizes, cost_fnc)
+            acc = test_accuracy(data, activation_funcs, layer_output_sizes, 
+                                input_size, output_size, cost_fnc, optimizer_)
             accuracy_i.append(acc)
         accuracies.append(accuracy_i)
     return accuracies
 
 def heat_map_test_accuracy(data, number_hidden_layers, nodes_per_layer,
-                           input_size, output_size, cost_fnc):
+                           input_size, output_size, cost_fnc, optimizer_):
     values = test_different_layers(data, number_hidden_layers, nodes_per_layer,
-                               input_size, output_size, cost_fnc)
+                               input_size, output_size, cost_fnc, optimizer_)
     k, l = len(number_hidden_layers), len(nodes_per_layer)
     z = np.array(values).reshape((k, l))
     fig, ax = plt.subplots(dpi=200)
