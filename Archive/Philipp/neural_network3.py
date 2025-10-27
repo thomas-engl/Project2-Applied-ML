@@ -361,16 +361,25 @@ class NeuralNetwork:
                 updated_layers.append((W,b))
             self.layers = updated_layers
 
-
     """ These last two methods are not needed in the project, but they can be 
     nice to have! The first one has a layers parameter so that you can use 
     autograd on it """
+    
     def autograd_compliant_predict(self, layers, inputs):
-        pass
+        a = inputs
+        for (W, b), activation_func in zip(layers, self.a_fncs):
+            z = a @ W + b.reshape(1, -1)
+            a = activation_func(z)
+        return a
 
     def autograd_gradient(self, inputs, targets):
-        pass
-             
+        # first define the cost function we are taking the derivatives of
+        def cost(input_, layers, target):
+            predictions = self.autograd_compliant_predict(layers, input_)
+            return self.cost_fnc(predictions, target)
+        # gradient wrt layers
+        grad_func = grad(cost, 1)
+        return grad_func(inputs, self.layers, targets)
 
         
 """
@@ -542,7 +551,7 @@ if __name__ == '__main__':
     """ initialize the neural network """
     _, input_size = np.shape(x_train)
     _, output_size = np.shape(y_train)
-    layer_output_sizes = [50, 100, output_size]     # define number of nodes in layers
+    layer_output_sizes = [5, 10, output_size]     # define number of nodes in layers
     activation_funcs = [ReLU, sigmoid, identity]    # activation functions
     activation_derivatives = get_activation_ders(activation_funcs)
     cost_fnc = mse                                  # cost function
@@ -553,19 +562,23 @@ if __name__ == '__main__':
             activation_derivatives, cost_fnc, cost_der
             )
     
-    """ make first predictions on the train data and compute the 
-    cost function """
-    predicts = ffnn.predict(x_train)
-    print(mse(predicts, y_train))
+    print(ffnn.compute_gradient(x_train, y_train), "\n")
+    print(ffnn.layers, "\n")
+    print(ffnn.autograd_gradient(x_train, y_train), "\n")
     
-    """ train the network and compute new predictions on the test data """
-    ffnn.train_network(x_train, y_train, batches= 10, optimizer=Momentum(
-        eta=0.01, momentum=0.9), epochs=500)
-    predicts_new = ffnn.predict(x_test)
-    print(mse(predicts_new, y_test))
+    # """ make first predictions on the train data and compute the 
+    # cost function """
+    # predicts = ffnn.predict(x_train)
+    # print(mse(predicts, y_train))
     
-    """ plot the dependence of the test accuracy on the number of hidden layers
-    and number of nodes per layer. Here, we only use the sigmoid function
-    as activation function """
-    heat_map_test_accuracy(load_runge_data(n), [0, 1, 2, 3], [5, 10, 25, 50], 
-                           input_size, output_size)
+    # """ train the network and compute new predictions on the test data """
+    # ffnn.train_network(x_train, y_train, batches= 10, optimizer=Momentum(
+    #     eta=0.01, momentum=0.9), epochs=500)
+    # predicts_new = ffnn.predict(x_test)
+    # print(mse(predicts_new, y_test))
+    
+    # """ plot the dependence of the test accuracy on the number of hidden layers
+    # and number of nodes per layer. Here, we only use the sigmoid function
+    # as activation function """
+    # heat_map_test_accuracy(load_runge_data(n), [0, 1, 2, 3], [5, 10, 25, 50], 
+    #                        input_size, output_size)
