@@ -10,6 +10,7 @@ Created on Mon Oct 27 18:34:56 2025
 ============================================================================"""    
 
 from neural_network import *
+import autograd.numpy as np
 
 # for plotting results
 import matplotlib.pyplot as plt
@@ -20,10 +21,9 @@ from matplotlib.ticker import StrMethodFormatter
 from mpl_toolkits.mplot3d import Axes3D                 # for 3d plotting
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-"""
-creates a heat map of the test accuracy, depending on number of hidden layers
-and nodes per hidden layer
-"""
+
+
+""" compute test accuracy before and after training """
 
 def test_accuracy(data, activation_funcs, layer_output_sizes, 
                   input_size, output_size, cost_fnc, optimizer_):
@@ -35,14 +35,22 @@ def test_accuracy(data, activation_funcs, layer_output_sizes,
         input_size, layer_output_sizes, activation_funcs, 
         activation_derivatives, cost_fnc, cost_der
         )
+    """ make first predictions on the train data and compute the 
+    cost function """
+    first_predicts = nn.predict(x_test)
+    cost_first_guess = cost_fnc(first_predicts, y_test)
     # train the network
     nn.train_network(x_train, y_train, batches=10, optimizer=optimizer_, 
                      epochs=500)
     predicts = nn.predict(x_test)
-    return cost_fnc(predicts, y_test)
+    cost_after_training = cost_fnc(predicts, y_test)
+    return cost_first_guess, cost_after_training
+
+""" computes test accuracy for networks with different numbers of hidden
+layers and numbers of nodes per layer """
 
 def test_different_layers(data, number_hidden_layers, nodes_per_layer,
-                           input_size, output_size, cost_fnc, optimizer_):
+                          input_size, output_size, cost_fnc, optimizer_):
     accuracies = []
     for i in number_hidden_layers:
         accuracy_i = []
@@ -50,11 +58,14 @@ def test_different_layers(data, number_hidden_layers, nodes_per_layer,
         for j in nodes_per_layer:
             layer_output_sizes = [j for _ in range(i)]
             layer_output_sizes.append(output_size)
-            acc = test_accuracy(data, activation_funcs, layer_output_sizes, 
-                                input_size, output_size, cost_fnc, optimizer_)
+            _, acc = test_accuracy(data, activation_funcs, layer_output_sizes, 
+                                   input_size, output_size, cost_fnc, optimizer_)
             accuracy_i.append(acc)
         accuracies.append(accuracy_i)
     return accuracies
+
+""" plot a heat map which shows the test accuracy depending on the number of
+hidden layers and number of nodes per layer """
 
 def heat_map_test_accuracy(data, number_hidden_layers, nodes_per_layer,
                            input_size, output_size, cost_fnc, optimizer_):
@@ -76,4 +87,3 @@ def heat_map_test_accuracy(data, number_hidden_layers, nodes_per_layer,
     plt.colorbar(im, cax=cax)
     fig.tight_layout()
     plt.show()
-
