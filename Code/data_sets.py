@@ -12,6 +12,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import  train_test_split 
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import resample
+from sklearn.datasets import fetch_openml
 # for plotting results
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -119,3 +120,16 @@ def plot_approximation_3D(x_data, y_data, domain):
     f = interpolate.LinearNDInterpolator(x_data, y_data.reshape(-1,))
     plot_3D(f, domain)
 
+
+""" MNIST data set """
+
+def load_mnist():
+    # Fetch the MNIST dataset
+    mnist = fetch_openml('mnist_784', version=1, as_frame=False, parser='auto')
+    # Extract data (features) and target (labels)
+    x = mnist.data
+    y = mnist.target
+    # scale and train-test split
+    x /= 255.0
+    y /= 255.0
+    return train_test_split(x, y)
