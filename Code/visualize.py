@@ -26,7 +26,11 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 """ compute test accuracy before and after training """
 
 def test_accuracy(data, activation_funcs, layer_output_sizes, 
-                  input_size, output_size, cost_fnc, optimizer_):
+                  input_size, output_size, cost_fnc, optimizer_,
+                  return_predicts=False):
+    """ sometimes we also want the predictions explicitly, then we also return
+    them. In general, we only need the accuracy. Hence return_predict is set
+    to False in general """
     # load data
     x_train, x_test, y_train, y_test = data
     activation_derivatives = get_activation_ders(activation_funcs)
@@ -44,7 +48,10 @@ def test_accuracy(data, activation_funcs, layer_output_sizes,
                      epochs=500)
     predicts = nn.predict(x_test)
     cost_after_training = cost_fnc(predicts, y_test)
-    return cost_first_guess, cost_after_training
+    if return_predicts:
+        return cost_first_guess, cost_after_training, first_predicts, predicts
+    else:
+        return cost_first_guess, cost_after_training
 
 """ computes test accuracy for networks with different numbers of hidden
 layers and numbers of nodes per layer """
