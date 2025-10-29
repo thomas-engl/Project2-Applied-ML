@@ -27,7 +27,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 def test_accuracy(data, activation_funcs, layer_output_sizes, 
                   input_size, output_size, cost_fnc, optimizer_,
-                  return_predicts=False):
+                  epochs_=500, return_predicts=False):
     """ sometimes we also want the predictions explicitly, then we also return
     them. In general, we only need the accuracy. Hence return_predict is set
     to False in general """
@@ -45,7 +45,7 @@ def test_accuracy(data, activation_funcs, layer_output_sizes,
     cost_first_guess = cost_fnc(first_predicts, y_test)
     # train the network
     nn.train_network(x_train, y_train, batches=10, optimizer=optimizer_, 
-                     epochs=500)
+                     epochs=epochs_)
     predicts = nn.predict(x_test)
     cost_after_training = cost_fnc(predicts, y_test)
     if return_predicts:
@@ -57,7 +57,8 @@ def test_accuracy(data, activation_funcs, layer_output_sizes,
 layers and numbers of nodes per layer """
 
 def test_different_layers(data, number_hidden_layers, nodes_per_layer,
-                          input_size, output_size, cost_fnc, optimizer_):
+                          input_size, output_size, cost_fnc, optimizer_,
+                          epochs=500):
     accuracies = []
     for i in number_hidden_layers:
         accuracy_i = []
@@ -66,7 +67,8 @@ def test_different_layers(data, number_hidden_layers, nodes_per_layer,
             layer_output_sizes = [j for _ in range(i)]
             layer_output_sizes.append(output_size)
             _, acc = test_accuracy(data, activation_funcs, layer_output_sizes, 
-                                   input_size, output_size, cost_fnc, optimizer_)
+                                   input_size, output_size, cost_fnc, optimizer_,
+                                   epochs_=epochs)
             accuracy_i.append(acc)
         accuracies.append(accuracy_i)
     return accuracies
@@ -75,9 +77,11 @@ def test_different_layers(data, number_hidden_layers, nodes_per_layer,
 hidden layers and number of nodes per layer """
 
 def heat_map_test_accuracy(data, number_hidden_layers, nodes_per_layer,
-                           input_size, output_size, cost_fnc, optimizer_):
+                           input_size, output_size, cost_fnc, optimizer_,
+                           epochs=500):
     values = test_different_layers(data, number_hidden_layers, nodes_per_layer,
-                               input_size, output_size, cost_fnc, optimizer_)
+                               input_size, output_size, cost_fnc, optimizer_,
+                               epochs=epochs)
     k, l = len(number_hidden_layers), len(nodes_per_layer)
     z = np.array(values).reshape((k, l))
     fig, ax = plt.subplots(dpi=200)
@@ -94,3 +98,17 @@ def heat_map_test_accuracy(data, number_hidden_layers, nodes_per_layer,
     plt.colorbar(im, cax=cax)
     fig.tight_layout()
     plt.show()
+
+
+""" plot of a simple approximation of a 1D function """
+
+def plot_1D_approx(x_data, y_true, y_predict):
+    plt.figure(dpi=150)
+    plt.scatter(x_data, y_true, label='test data')
+    plt.scatter(x_data, y_predict, label='predictions')
+    plt.grid()
+    plt.legend()
+    plt.xlabel(r'$x$')
+    plt.ylabel(r'$y$')
+    plt.show()
+
