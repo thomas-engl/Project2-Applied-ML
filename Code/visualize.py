@@ -27,6 +27,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 def test_accuracy(data, activation_funcs, layer_output_sizes, 
                   input_size, output_size, cost_fnc, optimizer_,
+                  lambda_ = 0.0, reg = None,
                   epochs_=500, return_predicts=False):
     """ sometimes we also want the predictions explicitly, then we also return
     them. In general, we only need the accuracy. Hence return_predict is set
@@ -37,7 +38,8 @@ def test_accuracy(data, activation_funcs, layer_output_sizes,
     cost_der = globals()[cost_fnc.__name__ + '_der']
     nn = NeuralNetwork(
         input_size, layer_output_sizes, activation_funcs, 
-        activation_derivatives, cost_fnc, cost_der
+        activation_derivatives, cost_fnc, cost_der, lmd=lambda_,
+        regularization=reg
         )
     """ make first predictions on the train data and compute the 
     cost function """
@@ -58,7 +60,7 @@ layers and numbers of nodes per layer """
 
 def test_different_layers(data, number_hidden_layers, nodes_per_layer,
                           input_size, output_size, cost_fnc, optimizer_,
-                          epochs=500):
+                          lambda_ = 0.0, reg = None, epochs=500):
     accuracies = []
     for i in number_hidden_layers:
         accuracy_i = []
@@ -68,6 +70,7 @@ def test_different_layers(data, number_hidden_layers, nodes_per_layer,
             layer_output_sizes.append(output_size)
             _, acc = test_accuracy(data, activation_funcs, layer_output_sizes, 
                                    input_size, output_size, cost_fnc, optimizer_,
+                                   lambda_ = lambda_, reg = reg,
                                    epochs_=epochs)
             accuracy_i.append(acc)
         accuracies.append(accuracy_i)
@@ -78,10 +81,10 @@ hidden layers and number of nodes per layer """
 
 def heat_map_test_accuracy(data, number_hidden_layers, nodes_per_layer,
                            input_size, output_size, cost_fnc, optimizer_,
-                           epochs=500):
+                           lambda_ = 0.0, reg = None, epochs=500):
     values = test_different_layers(data, number_hidden_layers, nodes_per_layer,
                                input_size, output_size, cost_fnc, optimizer_,
-                               epochs=epochs)
+                               lambda_ = lambda_, reg = reg, epochs=epochs)
     k, l = len(number_hidden_layers), len(nodes_per_layer)
     z = np.array(values).reshape((k, l))
     fig, ax = plt.subplots(dpi=200)
