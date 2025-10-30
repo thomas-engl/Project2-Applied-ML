@@ -217,9 +217,9 @@ class NeuralNetwork:
             dC_db = np.sum(dC_dz, axis=0)
             # if regularization is used, add the derivative w.r.t to the weights
             if self.regularization == 'L2' and self.lmd > 0.0:
-                dC_dW += 2 * self.lmd * W
+                dC_dW += 2 * self.lmd * self.layers[i][0]
             elif self.regularization == 'L1' and self.lmd > 0.0:
-                dC_dW += self.lmd * np.sign(W)
+                dC_dW += self.lmd * np.sign(self.layers[i][0])
             layer_grads[i] = (dC_dW, dC_db)
         return layer_grads
     
