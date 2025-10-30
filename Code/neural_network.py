@@ -118,7 +118,36 @@ class NeuralNetwork:
         activation_ders,
         cost_fun,
         cost_der,
+        lmd=0.0,
+        regularization=None
     ):
+        """
+        initializes the neural network and sets up the parameters
+
+        Parameters
+        ----------
+        network_input_size : int
+            input size of the network
+        layer_output_sizes : list
+            list with output sizes of the hidden layers and the output layer
+        activation_funcs : list
+            list of activation functions, i-th entry correspons to the i-th layer
+        activation_ders : list
+            list of derivatives of activation functions
+        cost_fun : function
+            cost function
+        cost_der : function
+            derivative of the cost function
+        lmd : float, optional
+            regularization parameter. The default is 0.0.
+        regularization : string, optional
+            type of regularization, either 'L1', 'L2' or None. The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
         self.i_size = network_input_size
         self.layer_output_sizes = layer_output_sizes
         self.layers = self.create_layers_batch()
@@ -126,6 +155,8 @@ class NeuralNetwork:
         self.a_ders = activation_ders
         self.cost_fnc = cost_fun
         self.cost_der = cost_der
+        self.lmd = lmd
+        self.regularization = regularization
         
     def create_layers_batch(self):
         layers = []
@@ -184,6 +215,11 @@ class NeuralNetwork:
             # we take the sum of all derivatives dC_dz to stay consistent 
             # with autograd
             dC_db = np.sum(dC_dz, axis=0)
+            # if regularization is used, add the derivative w.r.t to the weights
+            if self.regularization == 'L2' and self.lmd > 0.0:
+                dC_dW += 2 * self.lmd * W
+            elif self.regularization == 'L1' and self.lmd > 0.0:
+                dC_dW += self.lmd * np.sign(W)
             layer_grads[i] = (dC_dW, dC_db)
         return layer_grads
     
