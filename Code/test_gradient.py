@@ -28,7 +28,7 @@ cost_der = mse_der
 # construct the network
 ffnn = NeuralNetwork(
         input_size, layer_output_sizes, activation_funcs, 
-        activation_derivatives, cost_fnc, cost_der
+        activation_derivatives, cost_fnc, cost_der, lmd =0.1, regularization='L2'
         )
 
 gradients_manual=ffnn.compute_gradient(x_train, y_train)
@@ -41,4 +41,3 @@ def test_gradients_equal():
         (dC_dW_manual, dC_db_manual) = layer_grad_manual
         onp.testing.assert_allclose(dC_dW_autograd, dC_dW_manual)
         onp.testing.assert_allclose(dC_db_autograd, dC_db_manual)
-            
