@@ -36,6 +36,8 @@ def test_accuracy(data, activation_funcs, layer_output_sizes,
     x_train, x_test, y_train, y_test = data
     activation_derivatives = get_activation_ders(activation_funcs)
     cost_der = globals()[cost_fnc.__name__ + '_der']
+    # set a seed s.t. results are always comparable
+    np.random.seed(123)
     nn = NeuralNetwork(
         input_size, layer_output_sizes, activation_funcs, 
         activation_derivatives, cost_fnc, cost_der, lmd=lambda_,
@@ -114,4 +116,55 @@ def plot_1D_approx(x_data, y_true, y_predict):
     plt.xlabel(r'$x$')
     plt.ylabel(r'$y$')
     plt.show()
+    
+    
+"""============================================================================
+                        tuning of parameters
+============================================================================"""
+
+### find optimal regularization parameter
+
+def try_parameters(data, activation_funcs, layer_output_sizes, 
+                  input_size, output_size, cost_fnc, optimizer_,
+                  regularization, lambdas, epochs=500):
+    lst_results = []
+    for lmb in lambdas:
+        try:
+            err = test_accuracy(data, activation_funcs, layer_output_sizes, 
+                                input_size, output_size, cost_fnc, optimizer_,
+                                lambda_ = lmb, reg = regularization,
+                                epochs_=epochs)[1]
+        except:
+            err = np.inf
+        lst_results.append(err)   
+    return lambdas[np.argmin(np.array(lst_results))], np.min(np.array(lst_results))
+
+def optimal_reg_parameter(data, activation_funcs, layer_output_sizes, 
+                  input_size, output_size, cost_fnc, optimizer_,
+                  regularization, epochs_=500):
+    """ first search the best parameter in 10^{-i}, i=0,...,6. Afterwards, search
+    for better parameters in a neighborhood of the current optimum """
+    lambdas = np.logspace(-6, 0, 7)
+    lmb_, min_ = try_parameters(data, activation_funcs, layer_output_sizes, 
+                      input_size, output_size, cost_fnc, optimizer_,
+                      regularization, lambdas, epochs=epochs_)
+    new_params1 = np.linspace(0.1 * lmb_, 0.9 * lmb_, 9)
+    lmb_1, min_1 = try_parameters(data, activation_funcs, layer_output_sizes, 
+                      input_size, output_size, cost_fnc, optimizer_,
+                      regularization, new_params1, epochs=epochs_)
+    new_params2 = np.linspace(1.5 * lmb_, 5 * lmb_, 8)
+    lmb_2, min_2 = try_parameters(data, activation_funcs, layer_output_sizes, 
+                      input_size, output_size, cost_fnc, optimizer_,
+                      regularization, new_params2, epochs=epochs_)
+    dict_ = {min_ : lmb_, min_1 : lmb_1, min_2 : lmb_2}
+    # return the minimal value
+    return dict_[np.min(list(dict_))]
+    
+    
+        
+        
+        
+    
+        
+
 
