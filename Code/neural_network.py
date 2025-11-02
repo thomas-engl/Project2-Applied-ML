@@ -266,7 +266,20 @@ class NeuralNetwork:
         # first define the cost function we are taking the derivatives of
         def cost(input_, layers, target):
             predictions = self.autograd_compliant_predict(layers, input_)
-            return self.cost_fnc(predictions, target)
+            if self.regularization == 'L2' and self.lmd > 0.0:
+                squared_sum_weights = 0
+                for (W,b) in self.layers:
+                    squared_sum_weights += np.sum(np.square(W))
+                cost = self.cost_fnc(predictions, target) + squared_sum_weights
+            elif self.regularization == 'L1' and self.lmd > 0.0:
+                abs_sum_weights = 0
+                for (W,b) in self.layers:
+                    abs_sum_weights += np.sum(np.abs(W))
+                cost = self.cost_fnc(predictions, target) + abs_sum_weights
+            else:
+                cost = self.cost_fnc(predictions, target)
+            return cost     
+            
         # gradient wrt layers
         grad_func = grad(cost, 1)
         return grad_func(inputs, self.layers, targets)
