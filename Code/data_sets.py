@@ -45,16 +45,20 @@ def get_inputs_targets(inputs, targets):
         y = targets
     return x, y
 
-def get_scaled_data(inputs, targets):
+def get_scaled_data(inputs, targets, return_ymean=False):
     x, y = get_inputs_targets(inputs, targets)
-    # scaler = StandardScaler()
+    scaler = StandardScaler()
     x_train, x_test, y_train, y_test = train_test_split(x, y)
-    # x_train = scaler.fit_transform(x_train)
-    # x_test = scaler.fit_transform(x_test)
-    # y_mean = y_train.mean()
-    # y_train -= y_mean
-    # y_test -= y_mean
-    return x_train, x_test, y_train, y_test
+    scaler.fit(x_train)
+    x_train = scaler.transform(x_train)
+    x_test = scaler.transform(x_test)
+    y_mean = y_train.mean()
+    y_train -= y_mean
+    y_test -= y_mean
+    if return_ymean:
+        return x_train, x_test, y_train, y_test, y_mean
+    else:
+        return x_train, x_test, y_train, y_test
 
 
 """ ===========================================================================
