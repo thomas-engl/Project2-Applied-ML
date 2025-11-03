@@ -176,7 +176,7 @@ class NeuralNetwork:
         return a
 
     def cost(self, inputs, targets):
-        predictions = self.predict(self, inputs)
+        predictions = self.predict(inputs)
         return self.cost_fnc(predictions, targets)
 
     def _feed_forward_saver(self, inputs):
@@ -241,15 +241,15 @@ class NeuralNetwork:
                 else:
                     inputs_batch = inputs_resampled[i * batch_size : (i + 1) * batch_size, :]
                     targets_batch = targets_resampled[i * batch_size : (i + 1) * batch_size, :]
-            updated_layers = []
-            layers_grad = self.compute_gradient(inputs_batch, targets_batch)
-            for j in range(len(layers_grad)):
-                W, b = self.layers[j]
-                W_g, b_g = layers_grad[j]
-                W -= optimizers_weight[j].update_change(W_g)
-                b -= optimizers_bias[j].update_change(b_g)
-                updated_layers.append((W,b))
-            self.layers = updated_layers
+                updated_layers = []
+                layers_grad = self.compute_gradient(inputs_batch, targets_batch)
+                for j in range(len(layers_grad)):
+                    W, b = self.layers[j]
+                    W_g, b_g = layers_grad[j]
+                    W -= optimizers_weight[j].update_change(W_g)
+                    b -= optimizers_bias[j].update_change(b_g)
+                    updated_layers.append((W,b))
+                self.layers = updated_layers
 
     """ These last two methods are not needed in the project, but they can be 
     nice to have! The first one has a layers parameter so that you can use 
