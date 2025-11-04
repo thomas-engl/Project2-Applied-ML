@@ -99,26 +99,30 @@ def compare_train_test(data,
     """
     train_errs = []
     test_errs = []
-    numbers_hidden_layers = [1, 2, 3, 4, 5, 6]
-    epochs = [500, 500, 500, 600, 800, 1000]
+    numbers_hidden_layers = [1, 2, 3, 4, 5, 6, 7, 8]
+    epochs = [100, 150, 200, 250, 300, 400, 500, 600]
     for i in numbers_hidden_layers:
-        layer_output_sizes = [40 for _ in range(i)]
+        print(i)
+        layer_output_sizes = [50 for _ in range(i)]
         layer_output_sizes.append(output_size)
         if i == 1:
-            activation_funcs = [sigmoid]
+            activation_funcs = [ReLU]
         elif i == 2:
             activation_funcs = [ReLU, sigmoid]
         elif i == 3:
-            activation_funcs = [ReLU, LeakyReLU, sigmoid]
+            activation_funcs = [ReLU, sigmoid, sigmoid]
         elif i == 4:
             activation_funcs = [ReLU, sigmoid, LeakyReLU, sigmoid]
         elif i == 5:
-            activation_funcs = [ReLU, ReLU, sigmoid, LeakyReLU, sigmoid]
+            activation_funcs = [ReLU, sigmoid, sigmoid, LeakyReLU, sigmoid]
         elif i == 6:
-            activation_funcs = [ReLU, ReLU, ReLU, LeakyReLU, LeakyReLU, sigmoid]
+            activation_funcs = [ReLU, sigmoid, ReLU, sigmoid, LeakyReLU, sigmoid]
         elif i == 7:
-            activation_funcs = [ReLU, ReLU, LeakyReLU, ReLU, LeakyReLU, 
+            activation_funcs = [ReLU, sigmoid, ReLU, sigmoid, sigmoid, 
                                 LeakyReLU, sigmoid]
+        elif i == 8:
+            activation_funcs = [ReLU, sigmoid, sigmoid, ReLU, 
+                                sigmoid, sigmoid, LeakyReLU, sigmoid]
         activation_funcs.append(identity)
         train_err = 0
         test_err = 0
@@ -126,7 +130,10 @@ def compare_train_test(data,
             lmb = optimal_reg_parameter(data, activation_funcs, layer_output_sizes, 
                               input_size, output_size, cost_fnc, optimizer_,
                               reg, epochs[i-1])
-        for _ in range(50):
+        else:
+            lmb = 0.0
+        n_tests = 10
+        for _ in range(n_tests):
             # compute train and test errors multiple times and take the mean
             # at the end
             network, _ = init_train_network(data, activation_funcs, layer_output_sizes, 
@@ -134,8 +141,10 @@ def compare_train_test(data,
                                         lmb, reg, epochs[i-1])
             train_err += compute_train_accuracy(network, data)
             test_err += compute_test_accuracy(network, data)
-        train_errs.append(train_err / 50)
-        test_errs.append(test_err / 50)
+        print(train_err / n_tests)
+        print(test_err / n_tests)
+        train_errs.append(train_err / n_tests)
+        test_errs.append(test_err / n_tests)
     return train_errs, test_errs
 
 def plot_train_test_errs(data,
@@ -268,6 +277,32 @@ def optimal_reg_parameter(data, activation_funcs, layer_output_sizes,
     dict_ = {min_ : lmb_, min_1 : lmb_1, min_2 : lmb_2}
     # return the minimal value
     return dict_[np.min(list(dict_))]
+
+def optimal_reg_parameter_random(data, activation_funcs, layer_output_sizes, 
+                  input_size, output_size, cost_fnc, optimizer_,
+                  regularization, epochs_=500):
+    """
+    find best regularization hyper parameter via random search and one
+    refinement
+    """
+    # sample 4 unique random integers in the range (0,...,6)
+    rng = np.random.default_rng()
+    samples = rng.choice(7, size=4, replace=False) 
+    lambdas = np.array(10.0**(- samples), dtype=float)
+    lmb_, min_ = try_reg_parameters(data, activation_funcs, layer_output_sizes, 
+                      input_size, output_size, cost_fnc, optimizer_,
+                      regularization, lambdas, epochs=epochs_)
+    # do one refinement around lmb_ and sample 5 random numbers between 
+    # 0.5 * lmb_ to 5 lmb_ on a logarithmic scale
+    params_ = np.logspace(np.log10(0.5 * lmb_), np.log10(5 * lmb_), 10)
+    new_samples = rng.choice(10, size=5, replace=False) 
+    new_params = params_[new_samples]
+    lmb_1, min_1 = try_reg_parameters(data, activation_funcs, layer_output_sizes, 
+                      input_size, output_size, cost_fnc, optimizer_,
+                      regularization, new_params, epochs=epochs_)
+    dict_ = {min_ : lmb_, min_1 : lmb_1}
+    # return the minimal value
+    return dict_[np.min(list(dict_))]
     
 def reg_parameters_network_depth(data, input_size, output_size, cost_fnc, 
                                  optimizer_, regularization, epochs=500):
@@ -285,12 +320,72 @@ def reg_parameters_network_depth(data, input_size, output_size, cost_fnc,
             activation_funcs = [ReLU, sigmoid, LeakyReLU, sigmoid]
         layer_sizes.append(output_size)
         activation_funcs.append(identity)
-        optimal_lmbd = optimal_reg_parameter(data, activation_funcs, layer_sizes, 
+        optimal_lmbd = optimal_reg_parameter_random(data, activation_funcs, layer_sizes, 
                                              input_size, output_size, cost_fnc, 
                                              optimizer_, regularization)
         optimal.append(optimal_lmbd)
     df = pd.DataFrame(layer_sizes_lst, optimal)
     return df
+    
+
+"""============================================================================
+                compare different norms and influence of regularization
+                depending on number of nodes per layer
+============================================================================"""
+    
         
-        
+def compare_norms(data, input_size, output_size, cost_fnc,
+                  optimizer, epochs=500):
+    # check different numbers of nodes per layer
+    # for a better comparison, we always work with two hidden layers and
+    # ReLU and sigmoid as activation functions
+    activation_funcs = [ReLU, sigmoid, identity]
+    errs_no_reg = []
+    errs_L1_reg = []
+    errs_L2_reg = []
+    for i in (20, 40, 60, 80, 100):
+        layer_output_sizes = [i, i, output_size]
+        errs_no_reg.append(
+            test_accuracy(data, activation_funcs, layer_output_sizes, 
+                                       input_size, output_size, cost_fnc, 
+                                       optimizer)
+            )
+        # L1 regularization
+        lmb1 = optimal_reg_parameter(data, activation_funcs, layer_output_sizes, 
+                                     input_size, output_size, cost_fnc, 
+                                     optimizer, 'L1', epochs_=epochs)
+        errs_L1_reg.append(
+            test_accuracy(
+                data, activation_funcs, layer_output_sizes, input_size, 
+                output_size, cost_fnc, optimizer, lambda_=lmb1, reg='L1', 
+                epochs_=epochs)
+            )
+        # L2 regularization
+        lmb2 = optimal_reg_parameter(data, activation_funcs, layer_output_sizes, 
+                                     input_size, output_size, cost_fnc, 
+                                     optimizer, 'L2', epochs_=epochs)
+        errs_L2_reg.append(
+            test_accuracy(
+                data, activation_funcs, layer_output_sizes, input_size, 
+                output_size, cost_fnc, optimizer, lambda_=lmb2, reg='L2', 
+                epochs_=epochs)
+            )
+    return errs_no_reg, errs_L1_reg, errs_L2_reg
+
+def plot_compare_norms(data, input_size, output_size, cost_fnc,
+                       optimizer, epochs=500):
+    plt.figure(dpi=150)
+    x = np.array([20, 40, 60, 80, 100])
+    y1, y2, y3 = compare_norms(data, input_size, output_size, cost_fnc,
+                      optimizer, epochs)
+    plt.semilogy(x, y1, color='red', marker='D', label='no regularization')
+    plt.semilogy(x, y2, color='blue', marker='D', label=r'$L^1$ regularization')
+    plt.semilogy(x, y3, color='green', marker='D', label=r'$L^2$ regularization')
+    plt.xlabel('nodes per layer')
+    plt.ylabel('test MSE')
+    plt.grid()
+    plt.legend()
+    plt.show()
+    
+    
         
