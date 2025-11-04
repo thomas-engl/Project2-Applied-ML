@@ -73,17 +73,17 @@ We consider the following functions:
 
 def runge(x): return 1 / (1 + 25*x**2)
 
-def load_runge_data(num_pts):
-    x = np.random.uniform(-1, 1, num_pts)               # random data points
-    y = runge(x) + np.random.normal(0, 0.1, num_pts)   # targets
-    return get_scaled_data(x, y)
+def load_runge_data(num_pts, return_ymean=False, sigma=0.1):
+    x = np.random.uniform(-1, 1, num_pts)                # random data points
+    y = runge(x) + np.random.normal(0, sigma, num_pts)   # targets
+    return get_scaled_data(x, y, return_ymean)
 
 def runge2D(x, y): return 1 / (1 + (10*x - 5)**2 + (10*y - 5)**2)
 
-def load_runge2D_data(num_pts):
+def load_runge2D_data(num_pts, return_ymean=False):
     x = np.random.uniform(0, 1, size=(num_pts, 2))
     y = runge2D(x[:,0], x[:,1]) + np.random.normal(0, 0.1, num_pts)
-    return get_scaled_data(x, y)
+    return get_scaled_data(x, y, return_ymean=return_ymean)
 
 def gaussian_2D(x, y): return np.exp(- np.pi * (x**2 + y**2))
 
@@ -92,13 +92,20 @@ def load_gaussian2D_data(num_pts):
     y = gaussian_2D(x[:,0], x[:,1]) + np.random.normal(0, 0.1, num_pts)
     return get_scaled_data(x, y)
 
-def rastrigin(x, y): 
-    return 20 + x**2 - 10*np.cos(2*np.pi*x) + y**2 - 10*np.cos(2*np.pi*y)
+""" Rastrigin function for arbitrary dimensions d >= 2 """
 
-def load_rastrigin_data(num_pts):
-    x = np.random.uniform(-1, 1, size=(num_pts, 2))
-    y = rastrigin(x[:,0], x[:,1]) + np.random.normal(0, 0.1, num_pts)
-    return get_scaled_data(x, y)
+def rastrigin(x):
+    x = np.asarray(x)
+    d = x.shape[-1]
+    return 10 * d + np.sum(x**2 - 10 * np.cos(2 * np.pi * x), axis=-1)
+
+def load_rastrigin_data(num_pts, d, return_ymean=False):
+    """
+    Erzeugt Trainingsdaten (x, y) für die d-dimensionale Rastrigin-Funktion.
+    """
+    x = np.random.uniform(-1, 1, size=(num_pts, d))
+    y = rastrigin(x) + np.random.normal(0, 0.1, num_pts)
+    return get_scaled_data(x, y, return_ymean)
     
 def plot_3D(f, domain):
     x, y = np.linspace(domain[0][0], domain[0][1]), np.linspace(domain[1][0], 
