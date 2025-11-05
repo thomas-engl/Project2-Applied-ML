@@ -373,8 +373,7 @@ def plot_compare_norms(data, input_size, output_size, cost_fnc,
                         curse of dimensionality?
 ============================================================================"""
 
-def test_dimensionality(activation_funcs, layer_output_sizes, 
-                        cost_fnc, optimize_algorithm):
+def test_dimensionality(activation_funcs, layer_output_sizes, optimize_algorithm):
     """
     tests the approximation quality of our neural network when fitting the
     d-dimensional Rastrigin function. d varies from 2 to 5. 
@@ -386,11 +385,9 @@ def test_dimensionality(activation_funcs, layer_output_sizes,
     Parameters
     ----------
     activation_funcs : list
-        contains the activation functions of all layers
+        activation functions of the hidden layers
     layer_output_sizes : list
-        output sizes of the layers
-    cost_fnc : function
-        cost function of the neural network
+        list with output sizes of the hidden layers
     optimize_algorithm : function
         optmizer that is used in the back-propagation
 
@@ -408,7 +405,7 @@ def test_dimensionality(activation_funcs, layer_output_sizes,
         data = load_rastrigin_data(list_n_points[d-2], d)
         input_size = d
         test_mse = test_accuracy(data, activation_funcs, layer_output_sizes, 
-                                 input_size, 1, cost_fnc, 
+                                 input_size, 1, mse, 
                                  optimize_algorithm, 
                                  epochs_=list_epochs[d-2])
         end = time.perf_counter()
@@ -420,7 +417,47 @@ def test_dimensionality(activation_funcs, layer_output_sizes,
     return list_mses, list_times
         
     
-    
+"""============================================================================
+                        tuning of learning rate
+============================================================================"""
+
+def try_learning_rate(data, activation_funcs, layer_output_sizes, 
+                      input_size, output_size, cost_fnc, optimizer,
+                      etas):
+    """ without regularization for now """
+    lst_results = []
+    for eta_ in etas:
+        optimize_algorithm = optimizer(eta=eta_)
+        try:
+            # set a seed such that results are comparable
+            np.random.seed(123)
+            err = test_accuracy(data, activation_funcs, layer_output_sizes, 
+                                input_size, output_size, cost_fnc, 
+                                optimize_algorithm, epochs_=10)
+        except:
+            err = np.inf
+        lst_results.append(err) 
+    return etas[np.argmin(np.array(lst_results))], np.min(np.array(lst_results))
+
+def tune_learning_rate(data, activation_funcs, layer_output_sizes, 
+                       input_size, output_size, cost_fnc, optimizer):
+    # sample 4 unique random integers in the range (0,...,6)
+    rng = np.random.default_rng()
+    samples = rng.choice(7, size=4, replace=False) 
+    etas = np.array(10.0**(- samples), dtype=float)
+    eta_, min_ = try_learning_rate(data, activation_funcs, layer_output_sizes, 
+                      input_size, output_size, cost_fnc, optimizer, etas)
+    # do one refinement around eta_ and sample 5 random numbers between 
+    # 0.5 * eta_ to 5 eta_ on a logarithmic scale
+    params_ = np.logspace(np.log10(0.5 * eta_), np.log10(5 * eta_), 10)
+    new_samples = rng.choice(10, size=5, replace=False) 
+    new_params = params_[new_samples]
+    eta_1, min_1 = try_learning_rate(data, activation_funcs, layer_output_sizes, 
+                      input_size, output_size, cost_fnc, optimizer,
+                      new_params)
+    dict_ = {min_ : eta_, min_1 : eta_1}
+    # return the minimal value
+    return dict_[np.min(list(dict_))]
     
     
     
