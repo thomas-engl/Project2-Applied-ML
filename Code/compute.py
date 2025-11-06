@@ -373,7 +373,7 @@ def plot_compare_norms(data, input_size, output_size, cost_fnc,
                         curse of dimensionality?
 ============================================================================"""
 
-def test_dimensionality(activation_funcs, layer_output_sizes, optimize_algorithm):
+def test_dimensionality(activation_funcs, layer_output_sizes, optimizer):
     """
     tests the approximation quality of our neural network when fitting the
     d-dimensional Rastrigin function. d varies from 2 to 5. 
@@ -388,7 +388,7 @@ def test_dimensionality(activation_funcs, layer_output_sizes, optimize_algorithm
         activation functions of the hidden layers
     layer_output_sizes : list
         list with output sizes of the hidden layers
-    optimize_algorithm : function
+    optimizer : class
         optmizer that is used in the back-propagation
 
     Returns
@@ -401,17 +401,21 @@ def test_dimensionality(activation_funcs, layer_output_sizes, optimize_algorithm
     list_mses = []
     list_times = []
     for d in dims:
-        start = time.perf_counter()
-        data = load_rastrigin_data(list_n_points[d-2], d)
+        x_train, x_test, y_train, y_test = load_rastrigin_data(list_n_points[d-2], d)
+        data = get_scaled_data(x_train, x_test, y_train, y_test)
         input_size = d
+        output_size = 1
+        eta_opt = tune_learning_rate(data, activation_funcs, layer_output_sizes, 
+                                     input_size, output_size, mse, optimizer)
+        start = time.perf_counter()
         test_mse = test_accuracy(data, activation_funcs, layer_output_sizes, 
-                                 input_size, 1, mse, 
-                                 optimize_algorithm, 
+                                 input_size, 1, mse, optimizer(eta=eta_opt), 
                                  epochs_=list_epochs[d-2])
         end = time.perf_counter()
         list_mses.append(test_mse)
         list_times.append(end - start)
         print("d        = ", d)
+        print("optimal learning rate : ", eta_opt)
         print("test_mse = ", test_mse)
         print("time     = ", end - start, "\n")
     return list_mses, list_times
