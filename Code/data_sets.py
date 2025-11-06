@@ -45,20 +45,15 @@ def get_inputs_targets(inputs, targets):
         y = targets
     return x, y
 
-def get_scaled_data(inputs, targets, return_ymean=False):
-    x, y = get_inputs_targets(inputs, targets)
+def get_scaled_data(x_train, x_test, y_train, y_test):
     scaler = StandardScaler()
-    x_train, x_test, y_train, y_test = train_test_split(x, y)
     scaler.fit(x_train)
     x_train = scaler.transform(x_train)
     x_test = scaler.transform(x_test)
     y_mean = y_train.mean()
     y_train -= y_mean
     y_test -= y_mean
-    if return_ymean:
-        return x_train, x_test, y_train, y_test, y_mean
-    else:
-        return x_train, x_test, y_train, y_test
+    return x_train, x_test, y_train, y_test
 
 
 """ ===========================================================================
@@ -73,24 +68,27 @@ We consider the following functions:
 
 def runge(x): return 1 / (1 + 25*x**2)
 
-def load_runge_data(num_pts, return_ymean=False, sigma=0.1):
+def load_runge_data(num_pts, sigma=0.1):
     x = np.random.uniform(-1, 1, num_pts)                # random data points
     y = runge(x) + np.random.normal(0, sigma, num_pts)   # targets
-    return get_scaled_data(x, y, return_ymean)
+    x, y = get_inputs_targets(x, y)
+    return train_test_split(x, y)
 
 def runge2D(x, y): return 1 / (1 + (10*x - 5)**2 + (10*y - 5)**2)
 
-def load_runge2D_data(num_pts, return_ymean=False):
+def load_runge2D_data(num_pts):
     x = np.random.uniform(0, 1, size=(num_pts, 2))
     y = runge2D(x[:,0], x[:,1]) + np.random.normal(0, 0.1, num_pts)
-    return get_scaled_data(x, y, return_ymean=return_ymean)
+    x, y = get_inputs_targets(x, y)
+    return train_test_split(x, y)
 
 def gaussian_2D(x, y): return np.exp(- np.pi * (x**2 + y**2))
 
 def load_gaussian2D_data(num_pts):
     x = np.random.uniform(-1, 1, size=(num_pts, 2))
     y = gaussian_2D(x[:,0], x[:,1]) + np.random.normal(0, 0.1, num_pts)
-    return get_scaled_data(x, y)
+    x, y = get_inputs_targets(x, y)
+    return train_test_split(x, y)
 
 """ Rastrigin function for arbitrary dimensions d >= 2 """
 
@@ -105,7 +103,8 @@ def load_rastrigin_data(num_pts, d, return_ymean=False):
     """
     x = np.random.uniform(-1, 1, size=(num_pts, d))
     y = rastrigin(x) + np.random.normal(0, 0.1, num_pts)
-    return get_scaled_data(x, y, return_ymean)
+    x, y = get_inputs_targets(x, y)
+    return train_test_split(x, y)
     
 def plot_3D(f, domain):
     x, y = np.linspace(domain[0][0], domain[0][1]), np.linspace(domain[1][0], 
