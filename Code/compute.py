@@ -11,6 +11,7 @@ Created on Mon Oct 27 18:34:56 2025
 
 from neural_network import *
 import autograd.numpy as np
+from data_sets import *
 
 # for plotting results
 import matplotlib.pyplot as plt
@@ -22,6 +23,7 @@ from mpl_toolkits.mplot3d import Axes3D                 # for 3d plotting
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import pandas as pd
+import time
 
 
 """ compute test accuracy before and after training """
@@ -260,27 +262,6 @@ def try_reg_parameters(data, activation_funcs, layer_output_sizes,
 def optimal_reg_parameter(data, activation_funcs, layer_output_sizes, 
                   input_size, output_size, cost_fnc, optimizer_,
                   regularization, epochs_=500):
-    """ first search the best parameter in 10^{-i}, i=0,...,6. Afterwards, search
-    for better parameters in a neighborhood of the current optimum """
-    lambdas = np.logspace(-6, 0, 7)
-    lmb_, min_ = try_reg_parameters(data, activation_funcs, layer_output_sizes, 
-                      input_size, output_size, cost_fnc, optimizer_,
-                      regularization, lambdas, epochs=epochs_)
-    new_params1 = np.linspace(0.1 * lmb_, 0.9 * lmb_, 9)
-    lmb_1, min_1 = try_reg_parameters(data, activation_funcs, layer_output_sizes, 
-                      input_size, output_size, cost_fnc, optimizer_,
-                      regularization, new_params1, epochs=epochs_)
-    new_params2 = np.linspace(1.5 * lmb_, 5 * lmb_, 8)
-    lmb_2, min_2 = try_reg_parameters(data, activation_funcs, layer_output_sizes, 
-                      input_size, output_size, cost_fnc, optimizer_,
-                      regularization, new_params2, epochs=epochs_)
-    dict_ = {min_ : lmb_, min_1 : lmb_1, min_2 : lmb_2}
-    # return the minimal value
-    return dict_[np.min(list(dict_))]
-
-def optimal_reg_parameter_random(data, activation_funcs, layer_output_sizes, 
-                  input_size, output_size, cost_fnc, optimizer_,
-                  regularization, epochs_=500):
     """
     find best regularization hyper parameter via random search and one
     refinement
@@ -320,7 +301,7 @@ def reg_parameters_network_depth(data, input_size, output_size, cost_fnc,
             activation_funcs = [ReLU, sigmoid, LeakyReLU, sigmoid]
         layer_sizes.append(output_size)
         activation_funcs.append(identity)
-        optimal_lmbd = optimal_reg_parameter_random(data, activation_funcs, layer_sizes, 
+        optimal_lmbd = optimal_reg_parameter(data, activation_funcs, layer_sizes, 
                                              input_size, output_size, cost_fnc, 
                                              optimizer_, regularization)
         optimal.append(optimal_lmbd)
@@ -386,6 +367,102 @@ def plot_compare_norms(data, input_size, output_size, cost_fnc,
     plt.grid()
     plt.legend()
     plt.show()
+    
+    
+"""============================================================================
+                        curse of dimensionality?
+============================================================================"""
+
+def test_dimensionality(activation_funcs, layer_output_sizes, optimizer):
+    """
+    tests the approximation quality of our neural network when fitting the
+    d-dimensional Rastrigin function. d varies from 2 to 5. 
+    In higher dimension we need more data, therefore we use 10**(2d-1) data points.
+    Also, we need more epochs with increasing d. Hence, set the number of epochs
+    to 400(d-1). We measure the test MSE and the run time. The network archi-
+    tecture is always the same.
+
+    Parameters
+    ----------
+    activation_funcs : list
+        activation functions of the hidden layers
+    layer_output_sizes : list
+        list with output sizes of the hidden layers
+    optimizer : class
+        optmizer that is used in the back-propagation
+
+    Returns
+    -------
+
+    """
+    dims = np.arange(2, 6)
+    list_n_points = [1_000, 10_000, 50_000, 100_000]
+    list_epochs = [500, 750, 1_000, 1_500]
+    list_mses = []
+    list_times = []
+    for d in dims:
+        x_train, x_test, y_train, y_test = load_rastrigin_data(list_n_points[d-2], d)
+        data = get_scaled_data(x_train, x_test, y_train, y_test)
+        input_size = d
+        output_size = 1
+        eta_opt = tune_learning_rate(data, activation_funcs, layer_output_sizes, 
+                                     input_size, output_size, mse, optimizer)
+        start = time.perf_counter()
+        test_mse = test_accuracy(data, activation_funcs, layer_output_sizes, 
+                                 input_size, 1, mse, optimizer(eta=eta_opt), 
+                                 epochs_=list_epochs[d-2])
+        end = time.perf_counter()
+        list_mses.append(test_mse)
+        list_times.append(end - start)
+        print("d        = ", d)
+        print("optimal learning rate : ", eta_opt)
+        print("test_mse = ", test_mse)
+        print("time     = ", end - start, "\n")
+    return list_mses, list_times
+        
+    
+"""============================================================================
+                        tuning of learning rate
+============================================================================"""
+
+def try_learning_rate(data, activation_funcs, layer_output_sizes, 
+                      input_size, output_size, cost_fnc, optimizer,
+                      etas):
+    """ without regularization for now """
+    lst_results = []
+    for eta_ in etas:
+        optimize_algorithm = optimizer(eta=eta_)
+        try:
+            # set a seed such that results are comparable
+            np.random.seed(123)
+            err = test_accuracy(data, activation_funcs, layer_output_sizes, 
+                                input_size, output_size, cost_fnc, 
+                                optimize_algorithm, epochs_=10)
+        except:
+            err = np.inf
+        lst_results.append(err) 
+    return etas[np.argmin(np.array(lst_results))], np.min(np.array(lst_results))
+
+def tune_learning_rate(data, activation_funcs, layer_output_sizes, 
+                       input_size, output_size, cost_fnc, optimizer):
+    # sample 4 unique random integers in the range (0,...,6)
+    rng = np.random.default_rng()
+    samples = rng.choice(7, size=4, replace=False) 
+    etas = np.array(10.0**(- samples), dtype=float)
+    eta_, min_ = try_learning_rate(data, activation_funcs, layer_output_sizes, 
+                      input_size, output_size, cost_fnc, optimizer, etas)
+    # do one refinement around eta_ and sample 5 random numbers between 
+    # 0.5 * eta_ to 5 eta_ on a logarithmic scale
+    params_ = np.logspace(np.log10(0.5 * eta_), np.log10(5 * eta_), 10)
+    new_samples = rng.choice(10, size=5, replace=False) 
+    new_params = params_[new_samples]
+    eta_1, min_1 = try_learning_rate(data, activation_funcs, layer_output_sizes, 
+                      input_size, output_size, cost_fnc, optimizer,
+                      new_params)
+    dict_ = {min_ : eta_, min_1 : eta_1}
+    # return the minimal value
+    return dict_[np.min(list(dict_))]
+    
     
     
         
