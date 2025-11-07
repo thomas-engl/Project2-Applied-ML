@@ -1,0 +1,114 @@
+tuning of number of hidden layers with regularization
+--------------------------------------------------
+times:
+    0.000000    0.000100    0.000681    0.004642    0.031623    0.215443    1.467799    10.000000
+1   88.701066   79.631428   80.911602   83.998444   94.565434   97.475993   86.444622   82.901458
+2   96.498411  103.898176  102.698699  102.261637  101.724606  104.662703  102.845710  101.538647
+3  107.333172  108.482128  119.218576  113.480085  111.464886  122.678432  113.678528  112.990151
+4  116.800758  114.159292  115.511091  113.977494  114.726309  123.253576  112.387271  112.970712
+accuraccy
+   0.000000   0.000100   0.000681   0.004642   0.031623   0.215443   1.467799   10.000000
+1     0.9629     0.9652     0.9653     0.9716     0.9719     0.9714     0.9399     0.8856
+2     0.9690     0.9691     0.9716     0.9710     0.9731     0.9625     0.9242     0.7804
+3     0.9647     0.9685     0.9704     0.9715     0.9757     0.9669     0.9169     0.3211
+4     0.9682     0.9647     0.9627     0.9717     0.9718     0.9611     0.9137     0.1158
+--------------------------------------------------
+----------------------------------------------------------------------------------
+tuning of number of hidden notes with regularization
+accuraccy of 0is0.9628
+took 453.4169 seconds
+accuraccy of 0is0.966
+took 452.8481 seconds
+accuraccy of 0is0.9688
+took 426.6886 seconds
+accuraccy of 0is0.9767
+took 440.8832 seconds
+accuraccy of 0is0.9713
+took 441.1793 seconds
+accuraccy of 0is0.9711
+took 440.0960 seconds
+accuraccy of 0is0.9258
+took 433.0050 seconds
+accuraccy of 0is0.7572
+took 439.9810 seconds
+accuraccy of 1is0.9658
+took 205.6179 seconds
+accuraccy of 1is0.968
+took 201.4765 seconds
+accuraccy of 1is0.9728
+took 200.4096 seconds
+accuraccy of 1is0.9769
+took 204.4798 seconds
+accuraccy of 1is0.9787
+took 203.0394 seconds
+accuraccy of 1is0.9688
+took 200.4161 seconds
+accuraccy of 1is0.9236
+took 204.0656 seconds
+accuraccy of 1is0.7533
+took 211.7981 seconds
+accuraccy of 2is0.9686
+took 101.8767 seconds
+accuraccy of 2is0.9668
+took 101.4709 seconds
+accuraccy of 2is0.9675
+took 104.5678 seconds
+accuraccy of 2is0.9718
+took 103.6486 seconds
+accuraccy of 2is0.9755
+took 103.5804 seconds
+accuraccy of 2is0.9685
+took 107.1769 seconds
+accuraccy of 2is0.9223
+took 108.2128 seconds
+accuraccy of 2is0.765
+took 113.0497 seconds
+accuraccy of 3is0.963
+took 62.1303 seconds
+accuraccy of 3is0.9618
+took 59.6819 seconds
+accuraccy of 3is0.9627
+took 59.8717 seconds
+accuraccy of 3is0.9722
+took 60.8619 seconds
+accuraccy of 3is0.9735
+took 64.1506 seconds
+accuraccy of 3is0.9652
+took 58.7473 seconds
+accuraccy of 3is0.9317
+took 60.1576 seconds
+accuraccy of 3is0.7613
+took 60.7219 seconds
+accuraccy of 4is0.9523
+took 44.3750 seconds
+accuraccy of 4is0.943
+took 40.9146 seconds
+accuraccy of 4is0.9531
+took 44.1351 seconds
+accuraccy of 4is0.9558
+took 41.9489 seconds
+accuraccy of 4is0.9678
+took 39.3950 seconds
+accuraccy of 4is0.9574
+took 42.8499 seconds
+accuraccy of 4is0.9294
+took 38.9319 seconds
+accuraccy of 4is0.6223
+took 38.8082 seconds
+--------------------------------------------------
+times:
+      0.000000    0.000100    0.000681    0.004642    0.031623    0.215443    1.467799    10.000000
+512  453.416910  452.848115  426.688585  440.883245  441.179319  440.096005  433.004965  439.980964
+256  205.617910  201.476533  200.409598  204.479815  203.039435  200.416138  204.065644  211.798119
+128  101.876726  101.470918  104.567809  103.648562  103.580425  107.176882  108.212809  113.049694
+64    62.130282   59.681900   59.871740   60.861941   64.150589   58.747328   60.157648   60.721869
+32    44.375021   40.914619   44.135107   41.948920   39.394969   42.849915   38.931861   38.808240
+accuraccy
+     0.000000   0.000100   0.000681   0.004642   0.031623   0.215443   1.467799   10.000000
+512     0.9628     0.9660     0.9688     0.9767     0.9713     0.9711     0.9258     0.7572
+256     0.9658     0.9680     0.9728     0.9769     0.9787     0.9688     0.9236     0.7533
+128     0.9686     0.9668     0.9675     0.9718     0.9755     0.9685     0.9223     0.7650
+64      0.9630     0.9618     0.9627     0.9722     0.9735     0.9652     0.9317     0.7613
+32      0.9523     0.9430     0.9531     0.9558     0.9678     0.9574     0.9294     0.6223
+--------------------------------------------------
+---------------------------------------------

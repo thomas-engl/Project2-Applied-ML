@@ -1,0 +1,102 @@
+611 to do
+
+plot test and train error vs epochs
+relu sigmoid in turns vs relu sigmoid sigmoid
+train and tune models on Xval and test on Xtest
+tuning of learning rate
+confusion matrix -> one function that trains network, and makes test accuraccy and confusion matrix
+
+
+
+
+
+layer_output_sizes = [128, 64, 32, output_size]
+activation_funcs = [ReLU, sigmoid, sigmoid, softmax]
+100 batches 100 epochs
+Adam_ learning rate 3*10^-2
+Momentum learing rate 3*10^-3
+Constant learning rate 3*10^-3
+RMS Prop learning rate 3*10^-3 but 3*10^-2 not bad
+
+test regularization parameter L1
+with Adam(3*0.01)
+best is lmbda =0.03
+
+test regularization parameter L2
+with Adam(3*0.01)
+best is lmbda =0.03 but smaller also very good
+
+
+for report:
+two hidden layers with different number of nodes (1. without regularization 2. with L2 regularization)
+
+different number of hidden layers (1. without regularization 2. with L2 regularization)
+
+for simple model (without regularization): all gradient descents with tuned learning rates -> no big difference
+
+one example L1 regularization vs L2 regularization
+
+different activation functions:
+relu + all sigmoid vs relu and sigmoid in turns -> and a lot of combinations that dont work
+
+mnist dataset explanation with picture
+
+error analysis with confusion matrix and picture of misclassified number
+
+comparison to tensorflow or keras (running time)
+
+crossvalidation?
+or (train on 50 000 pictures, test on 10 000 pictures) different hyperparameters and for confusion matrix test accuraccy on the last 10 000 pictures
+
+
+Training 
+with List_layer_output_sizes = [[128, output_size], [128, 64, output_size], [128, 64, 32, output_size], [128, 64, 32, 16, output_size]]   # define number of nodes in layers
+list_activation_funcs = [[ReLU, softmax], [ReLU, sigmoid, softmax], [ReLU, sigmoid, sigmoid, softmax], [ReLU, sigmoid, sigmoid, sigmoid, softmax]]    # activation functions
+batches =100, optimizer=Adam(0.03), epochs =20 and 
+[0.9395714285714286, 0.9521428571428572, 0.9514285714285714, 0.95]
+
+Training 
+with List_layer_output_sizes = [[128, output_size], [128, 64, output_size], [128, 64, 32, output_size], [128, 64, 32, 16, output_size]]   # define number of nodes in layers
+list_activation_funcs = [[ReLU, softmax], [ReLU, sigmoid, softmax], [ReLU, sigmoid, sigmoid, softmax], [ReLU, sigmoid, sigmoid, sigmoid, softmax]]    # activation functions
+batches =100, optimizer=Adam(0.03), epochs =50 and 
+times:
+[74.60409412399986, 86.16149106600005, 91.84816598399993, 92.94777776800038]
+accuraccy
+[0.9534285714285714, 0.9630714285714286, 0.9608571428571429, 0.9590714285714286]
+
+Training 
+with List_layer_output_sizes = [[128, output_size], [128, 64, output_size], [128, 64, 32, output_size], [128, 64, 32, 16, output_size]]   # define number of nodes in layers
+list_activation_funcs = [[ReLU, softmax], [ReLU, sigmoid, softmax], [ReLU, sigmoid, sigmoid, softmax], [ReLU, sigmoid, sigmoid, sigmoid, softmax]]    # activation functions
+batches =100, optimizer=Adam(0.03), epochs =100 and 
+times:
+[156.47529417600072, 197.73877004099995, 208.70056172300065, 201.4753987260001]
+accuraccy
+[0.9621428571428572, 0.9659285714285715, 0.966, 0.9632857142857143]
+
+Training 
+with List_layer_output_sizes = [[128, output_size], [128, 64, output_size], [128, 64, 32, output_size], [128, 64, 32, 16, output_size]]   # define number of nodes in layers
+list_activation_funcs = [[ReLU, softmax], [ReLU, sigmoid, softmax], [ReLU, sigmoid, sigmoid, softmax], [ReLU, sigmoid, sigmoid, sigmoid, softmax]]    # activation functions
+batches =100, optimizer=Adam(0.005), epochs =200 and 
+times:
+[329.5168323000016, 412.85720435799885, 416.66849061599896, 428.45024797600126]
+accuraccy
+[0.9537857142857142, 0.9521428571428572, 0.9497142857142857, 0.9490714285714286]
+
+List_layer_output_sizes = [[128, output_size], [128, 64, output_size], [128, 64, 32, output_size], [128, 64, 32, 16, output_size]]   # define number of nodes in layers
+list_activation_funcs = [[ReLU, softmax], [ReLU, sigmoid, softmax], [ReLU, sigmoid, sigmoid, softmax], [ReLU, sigmoid, sigmoid, sigmoid, softmax]]    # activation functions
+number_hidden_layers =[1,2,3,4]
+List_regularization = np.logspace(-4,1,5)
+batches =100, optimizer=Adam(0.03), epochs =100
+
+times:
+    0.000100    0.001778    0.031623    0.562341    10.000000
+1  148.471240  147.911533  144.265908  151.863218  137.684028
+2  188.686711  174.336601  168.257943  187.913747  185.833592
+3  207.337743  207.863592  195.732355  179.929073  196.240250
+4  183.188671  186.762641  183.338285  195.190788  186.417735
+accuraccy
+   0.000100   0.001778   0.031623   0.562341   10.000000
+1   0.962143   0.967571   0.973929   0.958286   0.887714
+2   0.968000   0.972643   0.971286   0.957000   0.776643
+3   0.970214   0.969857   0.977143   0.952786   0.444071
+4   0.967500   0.970357   0.974500   0.950071   0.107357
