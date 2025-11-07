@@ -21,6 +21,7 @@ from matplotlib.ticker import MaxNLocator
 from matplotlib.ticker import StrMethodFormatter
 from mpl_toolkits.mplot3d import Axes3D                 # for 3d plotting
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib.colors import LogNorm
 
 import pandas as pd
 import time
@@ -190,6 +191,7 @@ def test_different_layers(data, number_hidden_layers, nodes_per_layer,
                 lmb = optimal_reg_parameter(data, activation_funcs, layer_output_sizes, 
                                   input_size, output_size, cost_fnc, optimizer_,
                                   reg, epochs_=int(round(0.4 * epochs)))
+                print(lmb)
                 lambdas.append(lmb)
             else:
                 lmb = 0.0
@@ -223,11 +225,16 @@ def heat_map_test_accuracy(data, number_hidden_layers, nodes_per_layer,
                             nodes_per_layer, input_size, output_size, cost_fnc, 
                             optimizer_, reg = reg, epochs=epochs)
         values = [acc, lmb]
-    for values_ in values:
+        
+    for i in range(len(values)):
         k, l = len(number_hidden_layers), len(nodes_per_layer)
-        z = np.array(values_).reshape((k, l))
+        z = np.array(values[i]).reshape((k, l))
         fig, ax = plt.subplots(dpi=200)
-        im = ax.imshow(z, cmap=cm.jet)
+        if i == 0:
+            im = ax.imshow(z, cmap=cm.jet)
+        else:
+            im = ax.imshow(z, cmap=cm.jet, norm=LogNorm(vmin=z.min(), 
+                                                        vmax=z.max()))
         # Show all ticks and label them with the respective list entries
         ax.set_xticks(range(l), labels=nodes_per_layer)
         # y_labels = np.array(['10^{}'.format(int(i)) for i in np.log10(params)])
@@ -237,8 +244,14 @@ def heat_map_test_accuracy(data, number_hidden_layers, nodes_per_layer,
         # make colorbar fit to size of the heat map
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.05)
-        plt.colorbar(im, cax=cax)
-        fig.tight_layout()
+        # colorbar
+        cbar = ax.figure.colorbar(im, cax=cax)
+        if i == 0:
+            cbar.ax.set_ylabel('test MSE', rotation=-90, va="bottom")
+        else:
+            cbar.ax.set_ylabel(r'regularization parameter $\lambda$', 
+                               rotation=-90, va="bottom")
+        # fig.tight_layout()
         plt.show()
 
 
