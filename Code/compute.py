@@ -92,7 +92,7 @@ def train_accuracy(data, activation_funcs, layer_output_sizes,
     return compute_train_accuracy(network, data)
     
 def compare_train_test(data,
-                  input_size, output_size, cost_fnc, optimizer_,
+                  input_size, output_size, cost_fnc, optimizer,
                   lambda_ = 0.0, reg = None):
     """
     function that computes train and test error for a neural network depending
@@ -102,49 +102,36 @@ def compare_train_test(data,
     train_errs = []
     test_errs = []
     numbers_hidden_layers = [1, 2, 3, 4, 5, 6, 7, 8]
-    epochs = [100, 150, 200, 250, 300, 400, 500, 600]
+    epochs = [200 for _ in range(8)]
     for i in numbers_hidden_layers:
-        print(i)
         layer_output_sizes = [50 for _ in range(i)]
         layer_output_sizes.append(output_size)
-        if i == 1:
-            activation_funcs = [ReLU]
-        elif i == 2:
-            activation_funcs = [ReLU, sigmoid]
-        elif i == 3:
-            activation_funcs = [ReLU, sigmoid, sigmoid]
-        elif i == 4:
-            activation_funcs = [ReLU, sigmoid, LeakyReLU, sigmoid]
-        elif i == 5:
-            activation_funcs = [ReLU, sigmoid, sigmoid, LeakyReLU, sigmoid]
-        elif i == 6:
-            activation_funcs = [ReLU, sigmoid, ReLU, sigmoid, LeakyReLU, sigmoid]
-        elif i == 7:
-            activation_funcs = [ReLU, sigmoid, ReLU, sigmoid, sigmoid, 
-                                LeakyReLU, sigmoid]
-        elif i == 8:
-            activation_funcs = [ReLU, sigmoid, sigmoid, ReLU, 
-                                sigmoid, sigmoid, LeakyReLU, sigmoid]
+        activation_funcs = [sigmoid for _ in range(i)]
         activation_funcs.append(identity)
         train_err = 0
         test_err = 0
+        eta_opt = tune_learning_rate(data, activation_funcs, layer_output_sizes, 
+                                     input_size, output_size, cost_fnc, optimizer)
+        print(eta_opt)
         if reg is not None:
             lmb = optimal_reg_parameter(data, activation_funcs, layer_output_sizes, 
-                              input_size, output_size, cost_fnc, optimizer_,
-                              reg, epochs[i-1])
+                              input_size, output_size, cost_fnc, optimizer(
+                              eta=eta_opt), reg, epochs[i-1])
         else:
             lmb = 0.0
-        n_tests = 10
+        n_tests = 1
         for _ in range(n_tests):
             # compute train and test errors multiple times and take the mean
             # at the end
+            np.random.seed(123)
             network, _ = init_train_network(data, activation_funcs, layer_output_sizes, 
-                                        input_size, output_size, cost_fnc, optimizer_,
-                                        lmb, reg, epochs[i-1])
+                                        input_size, output_size, cost_fnc, optimizer(
+                                        eta=eta_opt), lmb, reg, epochs[i-1])
             train_err += compute_train_accuracy(network, data)
             test_err += compute_test_accuracy(network, data)
-        print(train_err / n_tests)
-        print(test_err / n_tests)
+        print("number layers: ", i)
+        print("average test MSE  = ", test_err / n_tests)
+        print("average train MSE = ", train_err / n_tests)
         train_errs.append(train_err / n_tests)
         test_errs.append(test_err / n_tests)
     return train_errs, test_errs
@@ -173,20 +160,40 @@ def test_different_layers(data, number_hidden_layers, nodes_per_layer,
                           input_size, output_size, cost_fnc, optimizer_,
                           reg = None, epochs=500):
     accuracies = []
+    # if we use regularization we also want to know the values of the regula-
+    # rization hyper parameters
+    if reg is not None:
+        lambdas = []
     for i in number_hidden_layers:
         accuracy_i = []
-        activation_funcs = [sigmoid for _ in range(i+1)]
+        if i == 0:
+            activation_funcs = []
+        elif i == 1:	
+            activation_funcs = [sigmoid]	
+        elif i == 2:	
+            activation_funcs = [ReLU, sigmoid]	
+        elif i == 3:	
+            activation_funcs = [ReLU, LeakyReLU, sigmoid]	
+        elif i == 4:	
+            activation_funcs = [ReLU, sigmoid, LeakyReLU, sigmoid]	
+        elif i == 5:	
+            activation_funcs = [ReLU, ReLU, sigmoid, LeakyReLU, sigmoid]	
+        elif i == 6:	
+            activation_funcs = [ReLU, ReLU, ReLU, LeakyReLU, LeakyReLU, sigmoid]	
+        activation_funcs.append(identity)
         for j in nodes_per_layer:
             layer_output_sizes = [j for _ in range(i)]
             layer_output_sizes.append(output_size)
             if reg is not None:
-                # tune parameter
+                # tune regularization hyper parameter lambda
+                # use 30 % of the actual number of epochs for the tuning
                 lmb = optimal_reg_parameter(data, activation_funcs, layer_output_sizes, 
                                   input_size, output_size, cost_fnc, optimizer_,
-                                  reg, epochs_=epochs)
-                print("lambda = ", lmb)    # only for testing
+                                  reg, epochs_=int(round(0.4 * epochs)))
+                lambdas.append(lmb)
             else:
                 lmb = 0.0
+            # use a seed such that results are comparable
             np.random.seed(123)
             acc = test_accuracy(data, activation_funcs, layer_output_sizes, 
                                    input_size, output_size, cost_fnc, optimizer_,
@@ -194,7 +201,10 @@ def test_different_layers(data, number_hidden_layers, nodes_per_layer,
                                    epochs_=epochs)
             accuracy_i.append(acc)
         accuracies.append(accuracy_i)
-    return accuracies
+    if reg is not None:
+        return accuracies, lambdas
+    else:
+        return accuracies
 
 """ plot a heat map which shows the test accuracy depending on the number of
 hidden layers and number of nodes per layer """
@@ -202,25 +212,34 @@ hidden layers and number of nodes per layer """
 def heat_map_test_accuracy(data, number_hidden_layers, nodes_per_layer,
                            input_size, output_size, cost_fnc, optimizer_,
                            reg = None, epochs=500):
-    values = test_different_layers(data, number_hidden_layers, nodes_per_layer,
-                               input_size, output_size, cost_fnc, optimizer_,
-                               reg = reg, epochs=epochs)
-    k, l = len(number_hidden_layers), len(nodes_per_layer)
-    z = np.array(values).reshape((k, l))
-    fig, ax = plt.subplots(dpi=200)
-    im = ax.imshow(z, cmap=cm.jet)
-    # Show all ticks and label them with the respective list entries
-    ax.set_xticks(range(l), labels=nodes_per_layer)
-    # y_labels = np.array(['10^{}'.format(int(i)) for i in np.log10(params)])
-    ax.set_yticks(range(k), labels=number_hidden_layers)
-    ax.set_ylabel('number of hidden layers')
-    ax.set_xlabel('nodes per layer')
-    # make colorbar fit to size of the heat map
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="5%", pad=0.05)
-    plt.colorbar(im, cax=cax)
-    fig.tight_layout()
-    plt.show()
+    # create a list with results from the above function so that we can
+    # iterate over it afterwards, even if it consists of only one element
+    if reg is None:
+        values = [test_different_layers(data, number_hidden_layers, 
+                            nodes_per_layer, input_size, output_size, cost_fnc, 
+                            optimizer_, reg = reg, epochs=epochs)]
+    else:
+        acc, lmb = test_different_layers(data, number_hidden_layers, 
+                            nodes_per_layer, input_size, output_size, cost_fnc, 
+                            optimizer_, reg = reg, epochs=epochs)
+        values = [acc, lmb]
+    for values_ in values:
+        k, l = len(number_hidden_layers), len(nodes_per_layer)
+        z = np.array(values_).reshape((k, l))
+        fig, ax = plt.subplots(dpi=200)
+        im = ax.imshow(z, cmap=cm.jet)
+        # Show all ticks and label them with the respective list entries
+        ax.set_xticks(range(l), labels=nodes_per_layer)
+        # y_labels = np.array(['10^{}'.format(int(i)) for i in np.log10(params)])
+        ax.set_yticks(range(k), labels=number_hidden_layers)
+        ax.set_ylabel('number of hidden layers')
+        ax.set_xlabel('nodes per layer')
+        # make colorbar fit to size of the heat map
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        plt.colorbar(im, cax=cax)
+        fig.tight_layout()
+        plt.show()
 
 
 """ plot of a simple approximation of a 1D function """
@@ -237,7 +256,7 @@ def plot_1D_approx(x_data, y_true, y_predict):
     
     
 """============================================================================
-                        tuning of parameters
+                        tuning of hyper paramaters
 ============================================================================"""
 
 ### find optimal regularization parameter
@@ -307,6 +326,48 @@ def reg_parameters_network_depth(data, input_size, output_size, cost_fnc,
         optimal.append(optimal_lmbd)
     df = pd.DataFrame(layer_sizes_lst, optimal)
     return df
+
+### tuning of the learning rate
+
+def try_learning_rate(data, activation_funcs, layer_output_sizes, 
+                      input_size, output_size, cost_fnc, optimizer,
+                      etas):
+    """ without regularization for now """
+    lst_results = []
+    for eta_ in etas:
+        optimize_algorithm = optimizer(eta=eta_)
+        try:
+            # set a seed such that results are comparable
+            np.random.seed(123)
+            err = test_accuracy(data, activation_funcs, layer_output_sizes, 
+                                input_size, output_size, cost_fnc, 
+                                optimize_algorithm, epochs_=10)
+        except:
+            err = np.inf
+        lst_results.append(err) 
+    return etas[np.argmin(np.array(lst_results))], np.min(np.array(lst_results))
+
+def tune_learning_rate(data, activation_funcs, layer_output_sizes, 
+                       input_size, output_size, cost_fnc, optimizer):
+    # sample 4 unique random integers in the range (0,...,6)
+    rng = np.random.default_rng()
+    samples = rng.choice(7, size=4, replace=False) 
+    etas = np.array(10.0**(- samples), dtype=float)
+    eta_, min_ = try_learning_rate(data, activation_funcs, layer_output_sizes, 
+                      input_size, output_size, cost_fnc, optimizer, etas)
+    # do one refinement around eta_ and sample 5 random numbers between 
+    # 0.5 * eta_ to 5 eta_ on a logarithmic scale
+    params_ = np.logspace(np.log10(0.5 * eta_), np.log10(5 * eta_), 10)
+    new_samples = rng.choice(10, size=5, replace=False) 
+    new_params = params_[new_samples]
+    eta_1, min_1 = try_learning_rate(data, activation_funcs, layer_output_sizes, 
+                      input_size, output_size, cost_fnc, optimizer,
+                      new_params)
+    dict_ = {min_ : eta_, min_1 : eta_1}
+    # return the minimal value
+    return dict_[np.min(list(dict_))]
+    
+    
     
 
 """============================================================================
@@ -371,6 +432,7 @@ def plot_compare_norms(data, input_size, output_size, cost_fnc,
     
 """============================================================================
                         curse of dimensionality?
+ test how well our neural network can approximate higher-dimensional functions
 ============================================================================"""
 
 def test_dimensionality(activation_funcs, layer_output_sizes, optimizer):
@@ -385,14 +447,18 @@ def test_dimensionality(activation_funcs, layer_output_sizes, optimizer):
     Parameters
     ----------
     activation_funcs : list
-        activation functions of the hidden layers
+        contains activation functions of the network layers
     layer_output_sizes : list
-        list with output sizes of the hidden layers
+        contains output sizes of the network layers
     optimizer : class
-        optmizer that is used in the back-propagation
+        optimization algorithm for the network training
 
     Returns
     -------
+    list_mses : list
+        test MSEs for considered networks
+    list_times : list
+        runtimes to compute the test MSE
 
     """
     dims = np.arange(2, 6)
@@ -419,50 +485,3 @@ def test_dimensionality(activation_funcs, layer_output_sizes, optimizer):
         print("test_mse = ", test_mse)
         print("time     = ", end - start, "\n")
     return list_mses, list_times
-        
-    
-"""============================================================================
-                        tuning of learning rate
-============================================================================"""
-
-def try_learning_rate(data, activation_funcs, layer_output_sizes, 
-                      input_size, output_size, cost_fnc, optimizer,
-                      etas):
-    """ without regularization for now """
-    lst_results = []
-    for eta_ in etas:
-        optimize_algorithm = optimizer(eta=eta_)
-        try:
-            # set a seed such that results are comparable
-            np.random.seed(123)
-            err = test_accuracy(data, activation_funcs, layer_output_sizes, 
-                                input_size, output_size, cost_fnc, 
-                                optimize_algorithm, epochs_=10)
-        except:
-            err = np.inf
-        lst_results.append(err) 
-    return etas[np.argmin(np.array(lst_results))], np.min(np.array(lst_results))
-
-def tune_learning_rate(data, activation_funcs, layer_output_sizes, 
-                       input_size, output_size, cost_fnc, optimizer):
-    # sample 4 unique random integers in the range (0,...,6)
-    rng = np.random.default_rng()
-    samples = rng.choice(7, size=4, replace=False) 
-    etas = np.array(10.0**(- samples), dtype=float)
-    eta_, min_ = try_learning_rate(data, activation_funcs, layer_output_sizes, 
-                      input_size, output_size, cost_fnc, optimizer, etas)
-    # do one refinement around eta_ and sample 5 random numbers between 
-    # 0.5 * eta_ to 5 eta_ on a logarithmic scale
-    params_ = np.logspace(np.log10(0.5 * eta_), np.log10(5 * eta_), 10)
-    new_samples = rng.choice(10, size=5, replace=False) 
-    new_params = params_[new_samples]
-    eta_1, min_1 = try_learning_rate(data, activation_funcs, layer_output_sizes, 
-                      input_size, output_size, cost_fnc, optimizer,
-                      new_params)
-    dict_ = {min_ : eta_, min_1 : eta_1}
-    # return the minimal value
-    return dict_[np.min(list(dict_))]
-    
-    
-    
-        
