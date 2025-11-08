@@ -72,6 +72,8 @@ with open("output.txt", "w") as f:
     """
 
     """
+    #corresponds to 611
+    #find the best model with knowing the test set 
     #fit the best model
     np.random.seed(193)
     _, input_size = np.shape(X_trainval)
@@ -108,6 +110,7 @@ with open("output.txt", "w") as f:
     print(results)
     print("--------------------------------------------------")
 
+    #corresponds to 611
     np.random.seed(378)
     _, input_size = np.shape(X_train)
     _, output_size = np.shape(y_train)
@@ -177,15 +180,16 @@ with open("output.txt", "w") as f:
     """
 
     #tune learning rate and lambda simultaneously
-    
+    """
     np.random.seed(472)
     layer_output_sizes = [128, 64, 32, output_size]
     activation_funcs = [ReLU, sigmoid, sigmoid, softmax]
     list_lambda = np.logspace(-4,1,5)
     list_learning_rates = np.logspace(-4,1,5) 
     tune_learning_rate_reg(X_train, y_train, X_val, y_val, layer_output_sizes, activation_funcs, list_learning_rates, list_lambda, epochs=1)
+    """
     
-    
+#the following produced the results where by mistake everything was 128 64 32
 
     """
     list_layer_output_sizes = [[512, 256, output_size], [256, 128, output_size], [128, 64, output_size], [64, 32, output_size], [32, 16, output_size]]   # define number of nodes in layers
@@ -199,5 +203,16 @@ with open("output.txt", "w") as f:
         tune_learning_rate_reg(X_train, y_train, X_val, y_val, layer_output_sizes, activation_funcs, list_learning_rates, list_lambda, epochs=1)
     """
 
+    """
+    #compare different activation functions
+    print("compare different activation functions")
+    np.random.seed(209)
+    layer_output_sizes = [128, 64, 32, output_size]
+    list_activation_funcs = [[ReLU, ReLU, ReLU, softmax], [ReLU, sigmoid, sigmoid, softmax], [ReLU, sigmoid, ReLU, softmax], [sigmoid, sigmoid, sigmoid, softmax]]
+    list_model_numbers = [1,2,3]
+    list_regularization = np.logspace(-4,1,5)
+    epochs = 100
+    compare_activation_reg(X_train, y_train, X_val, y_val, layer_output_sizes, list_activation_funcs, list_model_numbers, list_regularization, epochs)
+    """
 
     sys.stdout = sys.__stdout__ 
