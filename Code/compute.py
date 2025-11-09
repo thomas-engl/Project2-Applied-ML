@@ -102,8 +102,8 @@ def compare_train_test(data,
     """
     train_errs = []
     test_errs = []
-    numbers_hidden_layers = [1, 2, 3, 4, 5, 6, 7, 8]
-    epochs = [200 for _ in range(8)]
+    numbers_hidden_layers = np.arange(1, 9)
+    epochs = [500 for _ in range(8)]
     for i in numbers_hidden_layers:
         layer_output_sizes = [50 for _ in range(i)]
         layer_output_sizes.append(output_size)
@@ -113,18 +113,17 @@ def compare_train_test(data,
         test_err = 0
         eta_opt = tune_learning_rate(data, activation_funcs, layer_output_sizes, 
                                      input_size, output_size, cost_fnc, optimizer)
-        print(eta_opt)
         if reg is not None:
             lmb = optimal_reg_parameter(data, activation_funcs, layer_output_sizes, 
                               input_size, output_size, cost_fnc, optimizer(
                               eta=eta_opt), reg, epochs[i-1])
         else:
             lmb = 0.0
-        n_tests = 1
-        for _ in range(n_tests):
+        n_tests = 5
+        for j in range(n_tests):
             # compute train and test errors multiple times and take the mean
             # at the end
-            np.random.seed(123)
+            np.random.seed(j)
             network, _ = init_train_network(data, activation_funcs, layer_output_sizes, 
                                         input_size, output_size, cost_fnc, optimizer(
                                         eta=eta_opt), lmb, reg, epochs[i-1])
