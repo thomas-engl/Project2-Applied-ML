@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import fetch_openml
 from sklearn.preprocessing import OneHotEncoder
-from Code.neural_network import *
+from neural_network import *
 from optimizers import *
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from mpl_toolkits.axes_grid1 import make_axes_locatable
