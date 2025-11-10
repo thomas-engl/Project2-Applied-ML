@@ -22,7 +22,7 @@ Code/optimizers.py: Contains all needed optimizers
 
 Code/regression_run.ipynb: Runs all regression tasks
 
-Code/test_custom_netzwork.ipynb: TBA and perhaps rename
+Code/test_custom_netzwork.ipynb: Contains the test of the custom neural network code against PyTorch
 
 Code/test_gradients.py: Pytest to test the manual derivates in the backpropagation
 
