@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import fetch_openml
 from sklearn.preprocessing import OneHotEncoder
-from Code.neural_network import *
+from neural_network import *
 from optimizers import *
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -143,7 +143,7 @@ def train_and_evaluate_best_model(x_train, y_train, x_test, y_test, layer_output
 
     # Get the colorbar from the image in the display
     cbar = disp.im_.colorbar
-    cbar.set_label("Number of misclassified", rotation=270, labelpad=15)
+    cbar.set_label("Number of occurrences", rotation=270, labelpad=15)
     #disp.plot(cmap='Blues', values_format='d')
     #plt.title("Confusion Matrix")
     plt.show()
