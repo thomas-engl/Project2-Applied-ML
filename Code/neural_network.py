@@ -157,6 +157,8 @@ class NeuralNetwork:
         self.cost_der = cost_der
         self.lmd = lmd
         self.regularization = regularization
+        self.train_errors = None
+        self.test_errors = None
         
     def create_layers_batch(self):
         layers = []
@@ -223,7 +225,7 @@ class NeuralNetwork:
             layer_grads[i] = (dC_dW, dC_db)
         return layer_grads
     
-    def train_network(self, inputs, targets, batches, optimizer, epochs):
+    def train_network(self, inputs, targets, batches, optimizer, epochs, printer=False, save_mses =False, x_test = None, y_test = None):
         batch_size = inputs.shape[0] // batches
         optimizers_weight = []
         optimizers_bias = []
@@ -231,7 +233,11 @@ class NeuralNetwork:
             optimizers_weight.append(deepcopy(optimizer))
             optimizers_bias.append(deepcopy(optimizer))
         
-        for _ in range(epochs):
+        if save_mses:
+            train_errors = []
+            test_errors = []
+
+        for epoch_index in range(epochs):
             inputs_resampled, targets_resampled = resample(inputs, targets)
             for i in range(batches):
                 if i == (batches - 1):
@@ -250,6 +256,21 @@ class NeuralNetwork:
                     b -= optimizers_bias[j].update_change(b_g)
                     updated_layers.append((W,b))
                 self.layers = updated_layers
+            if printer:
+                print("epoch" +str(epoch_index)+": train"+str(accuracy(self.predict(inputs), targets)))
+                if x_test is not None:
+                    print("epoch" +str(epoch_index)+":test"+str(accuracy(self.predict(x_test), y_test)))
+                
+            if save_mses:
+                train_errors.append(accuracy(self.predict(inputs), targets))
+                test_errors.append(accuracy(self.predict(x_test), y_test))
+        
+        if save_mses:
+            self.train_errors = train_errors
+            self.test_errors = test_errors
+                
+
+
 
     """ These last two methods are not needed in the project, but they can be 
     nice to have! The first one has a layers parameter so that you can use 
@@ -268,14 +289,14 @@ class NeuralNetwork:
             predictions = self.autograd_compliant_predict(layers, input_)
             if self.regularization == 'L2' and self.lmd > 0.0:
                 squared_sum_weights = 0
-                for (W,b) in self.layers:
+                for (W,b) in layers:
                     squared_sum_weights += np.sum(np.square(W))
-                cost = self.cost_fnc(predictions, target) + squared_sum_weights
+                cost = self.cost_fnc(predictions, target) + self.lmd * squared_sum_weights
             elif self.regularization == 'L1' and self.lmd > 0.0:
                 abs_sum_weights = 0
-                for (W,b) in self.layers:
+                for (W,b) in layers:
                     abs_sum_weights += np.sum(np.abs(W))
-                cost = self.cost_fnc(predictions, target) + abs_sum_weights
+                cost = self.cost_fnc(predictions, target) + self.lmd * abs_sum_weights
             else:
                 cost = self.cost_fnc(predictions, target)
             return cost     

@@ -26,7 +26,6 @@ def test_gradients_equal():
     activation_derivatives = get_activation_ders(activation_funcs)
     cost_fnc = mse                                  # cost function
     cost_der = mse_der
-
     for regularization_method in [None, 'L1', 'L2']:
     # construct the network
         ffnn = NeuralNetwork(
@@ -36,7 +35,7 @@ def test_gradients_equal():
         ffnn.train_network(x_train, y_train, batches=10, optimizer=Adam(0.01), epochs=10)
         gradients_manual=ffnn.compute_gradient(x_train, y_train)
 
-        gradients_autograd=ffnn.compute_gradient(x_train, y_train)
+        gradients_autograd=ffnn.autograd_gradient(x_train, y_train)
 
 
         for (layer_grad_autograd, layer_grad_manual) in zip(gradients_autograd, gradients_manual):
