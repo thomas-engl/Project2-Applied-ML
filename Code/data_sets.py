@@ -76,9 +76,9 @@ def load_runge_data(num_pts, sigma=0.1):
 
 def runge2D(x, y): return 1 / (1 + (10*x - 5)**2 + (10*y - 5)**2)
 
-def load_runge2D_data(num_pts):
+def load_runge2D_data(num_pts, sigma=0.1):
     x = np.random.uniform(0, 1, size=(num_pts, 2))
-    y = runge2D(x[:,0], x[:,1]) + np.random.normal(0, 0.1, num_pts)
+    y = runge2D(x[:,0], x[:,1]) + np.random.normal(0, sigma, num_pts)
     x, y = get_inputs_targets(x, y)
     return train_test_split(x, y)
 
@@ -97,12 +97,12 @@ def rastrigin(x):
     d = x.shape[-1]
     return 10 * d + np.sum(x**2 - 10 * np.cos(2 * np.pi * x), axis=-1)
 
-def load_rastrigin_data(num_pts, d, return_ymean=False):
+def load_rastrigin_data(num_pts, d, sigma=0.1):
     """
     Erzeugt Trainingsdaten (x, y) für die d-dimensionale Rastrigin-Funktion.
     """
     x = np.random.uniform(-1, 1, size=(num_pts, d))
-    y = rastrigin(x) + np.random.normal(0, 0.1, num_pts)
+    y = rastrigin(x) + np.random.normal(0, sigma, num_pts)
     x, y = get_inputs_targets(x, y)
     return train_test_split(x, y)
     
